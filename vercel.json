@@ -1,0 +1,26 @@
+{
+  "functions": {
+    "api/*.js": {
+      "runtime": "nodejs18.x",
+      "memory": 1024,
+      "maxDuration": 30
+    }
+  },
+  "builds": [
+    { "src": "api/*.js", "use": "@vercel/node" },
+    { "src": "vite.config.js", "use": "@vercel/static-build" }
+  ],
+  "env": {
+    "AWS_REGION": "",
+    "AWS_ACCESS_KEY_ID": "",
+    "AWS_SECRET_ACCESS_KEY": "",
+    "S3_BUCKET": "",
+    "MAX_FILE_SIZE_MB": "10",
+    "ALLOWED_MIME": "image/*,text/plain,application/pdf"
+  },
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
+}
+
