@@ -6,10 +6,8 @@
       "maxDuration": 30
     }
   },
-  "builds": [
-    { "src": "api/*.js", "use": "@vercel/node" },
-    { "src": "vite.config.js", "use": "@vercel/static-build" }
-  ],
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
   "env": {
     "AWS_REGION": "",
     "AWS_ACCESS_KEY_ID": "",
@@ -18,9 +16,9 @@
     "MAX_FILE_SIZE_MB": "10",
     "ALLOWED_MIME": "image/*,text/plain,application/pdf"
   },
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/api/$1" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/(.*)", "destination": "/" }
   ]
 }
 
