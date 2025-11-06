@@ -8,6 +8,30 @@ export default function App() {
   const [error, setError] = useState('')
   const [link, setLink] = useState('')
 
+  async function compressIfImage(originalFile) {
+    try {
+      if (!originalFile.type.startsWith('image/')) return originalFile
+      const arrayBuffer = await originalFile.arrayBuffer()
+      const bitmap = await createImageBitmap(new Blob([arrayBuffer]))
+      const maxDim = 1600
+      const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height))
+      const width = Math.max(1, Math.round(bitmap.width * scale))
+      const height = Math.max(1, Math.round(bitmap.height * scale))
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')
+      ctx.drawImage(bitmap, 0, 0, width, height)
+      const mime = 'image/webp'
+      const quality = 0.82
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, mime, quality))
+      if (!blob) return originalFile
+      return new File([blob], originalFile.name.replace(/\.[^.]+$/, '') + '.webp', { type: mime })
+    } catch {
+      return originalFile
+    }
+  }
+
   function onSelect(e) {
     setLink('')
     setError('')
@@ -36,9 +60,20 @@ export default function App() {
     setError('')
     setLink('')
     try {
-      const formData = new FormData()
-      formData.append('file', file)
+      const toUpload = await compressIfImage(file)
+      // 1) Ask server for presigned URLs
+      const presignRes = await fetch('/api/presign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: toUpload.name, contentType: toUpload.type })
+      })
+      if (!presignRes.ok) {
+        const data = await presignRes.json().catch(() => ({}))
+        throw new Error(data.error || 'Failed to presign URL')
+      }
+      const { putUrl, getUrl } = await presignRes.json()
 
+      // 2) Upload directly to S3 via PUT (progress supported)
       const xhr = new XMLHttpRequest()
       const promise = new Promise((resolve, reject) => {
         xhr.upload.onprogress = (evt) => {
@@ -49,29 +84,56 @@ export default function App() {
         }
         xhr.onload = () => {
           if (xhr.status >= 200 && xhr.status < 300) {
-            resolve(xhr.responseText)
+            resolve('ok')
           } else {
-            try {
-              const data = JSON.parse(xhr.responseText)
-              const msg = typeof data?.error === 'string' ? data.error : 'Upload failed'
-              reject(new Error(msg))
-            } catch (_) {
-              reject(new Error(xhr.responseText || 'Upload failed'))
-            }
+            reject(new Error('Upload failed'))
           }
         }
         xhr.onerror = () => reject(new Error('Network error'))
       })
-
-      const apiUrl = (import.meta.env && import.meta.env.VITE_API_URL) || '/api/upload'
-      xhr.open('POST', apiUrl)
-      xhr.setRequestHeader('x-upload-client', 'neo-uploader')
-      xhr.send(formData)
-      const resText = await promise
-      const json = JSON.parse(resText)
-      setLink(json.url)
+      xhr.open('PUT', putUrl)
+      if (toUpload.type) xhr.setRequestHeader('Content-Type', toUpload.type)
+      xhr.send(toUpload)
+      await promise
+      setLink(getUrl)
     } catch (e) {
-      setError(e.message || 'Upload failed')
+      // Fallback to server-side multipart upload (works locally even without S3 CORS)
+      try {
+        const formData = new FormData()
+        formData.append('file', file)
+
+        const xhr = new XMLHttpRequest()
+        const promise = new Promise((resolve, reject) => {
+          xhr.upload.onprogress = (evt) => {
+            if (evt.lengthComputable) {
+              const p = Math.round((evt.loaded / evt.total) * 100)
+              setProgress(p)
+            }
+          }
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve(xhr.responseText)
+            } else {
+              try {
+                const data = JSON.parse(xhr.responseText)
+                const msg = typeof data?.error === 'string' ? data.error : 'Upload failed'
+                reject(new Error(msg))
+              } catch (_) {
+                reject(new Error(xhr.responseText || 'Upload failed'))
+              }
+            }
+          }
+          xhr.onerror = () => reject(new Error('Network error'))
+        })
+        xhr.open('POST', '/api/upload')
+        xhr.setRequestHeader('x-upload-client', 'neo-uploader')
+        xhr.send(formData)
+        const resText = await promise
+        const json = JSON.parse(resText)
+        setLink(json.url)
+      } catch (fallbackErr) {
+        setError(e.message || 'Upload failed')
+      }
     } finally {
       setUploading(false)
     }

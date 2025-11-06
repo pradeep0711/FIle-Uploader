@@ -1,5 +1,6 @@
 import http from 'http'
 import handler from './api/upload.js'
+import presign from './api/presign.js'
 
 const PORT = process.env.PORT || 3000
 
@@ -20,6 +21,9 @@ const server = http.createServer((req, resRaw) => {
   }
   if (req.url === '/api/upload' && req.method === 'POST') {
     return handler(req, res)
+  }
+  if (req.url === '/api/presign' && req.method === 'POST') {
+    return presign(req, res)
   }
   if (req.url?.startsWith('/api/')) {
     res.status(404).end('Not Found')

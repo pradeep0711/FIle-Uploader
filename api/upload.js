@@ -141,7 +141,7 @@ async function streamSingleFileToS3(req, { bucket, region, allowedMime, maxBytes
           ContentType: mimeType || 'application/octet-stream',
           Metadata: meta
         },
-        queueSize: 4,      // parallel parts
+        queueSize: 8,      // increase parallelism
         partSize: 8 * MB   // 8MB parts
       })
 
