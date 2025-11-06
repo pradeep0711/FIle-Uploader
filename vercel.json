@@ -1,24 +1,15 @@
 {
   "functions": {
-    "api/*.js": {
-      "runtime": "nodejs18.x",
+    "api/**/*.js": {
+      "runtime": "nodejs20.x",
       "memory": 1024,
       "maxDuration": 30
     }
   },
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "env": {
-    "AWS_REGION": "",
-    "AWS_ACCESS_KEY_ID": "",
-    "AWS_SECRET_ACCESS_KEY": "",
-    "S3_BUCKET": "",
-    "MAX_FILE_SIZE_MB": "10",
-    "ALLOWED_MIME": "image/*,text/plain,application/pdf"
-  },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/(.*)", "destination": "/" }
   ]
 }
-

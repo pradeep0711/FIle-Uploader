@@ -63,7 +63,7 @@ export default function App() {
         xhr.onerror = () => reject(new Error('Network error'))
       })
 
-      const apiUrl = (import.meta.env && import.meta.env.VITE_API_URL) || 'http://localhost:3000/api/upload'
+      const apiUrl = (import.meta.env && import.meta.env.VITE_API_URL) || '/api/upload'
       xhr.open('POST', apiUrl)
       xhr.setRequestHeader('x-upload-client', 'neo-uploader')
       xhr.send(formData)
