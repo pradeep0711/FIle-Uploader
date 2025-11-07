@@ -37,7 +37,7 @@ export default function App() {
     setError('')
     const f = e.target.files?.[0]
     if (!f) { setFile(null); return }
-    const maxBytes = (Number(10) || 10) * 1024 * 1024 // mirror server default
+    const maxBytes = (Number(5) || 5) * 1024 * 1024 // mirror server default
     const allowed = ['image/', 'text/plain', 'application/pdf']
     const okType = allowed.some(rule => rule.endsWith('/') ? (f.type || '').startsWith(rule) : (f.type === rule))
     if (!okType) {
@@ -46,7 +46,7 @@ export default function App() {
       return
     }
     if (f.size > maxBytes) {
-      setError(`File too large. Max 10 MB.`)
+      setError(`File too large. Max 5 MB.`)
       setFile(null)
       return
     }
@@ -179,7 +179,7 @@ export default function App() {
           )}
           
           <div className="stats">
-            <div><strong>10 MB</strong><span>Default max size</span></div>
+            <div><strong>5 MB</strong><span>Default max size</span></div>
             <div><strong>Streaming</strong><span>Multipart to S3</span></div>
             <div><strong>Signed URLs</strong><span>Private by default</span></div>
           </div>

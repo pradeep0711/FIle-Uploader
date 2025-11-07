@@ -44,7 +44,7 @@ export default async function handler(req, res) {
     contentLength: req.headers['content-length']
   })
 
-  const maxFileSizeMb = Number(process.env.MAX_FILE_SIZE_MB || 10)
+  const maxFileSizeMb = Number(process.env.MAX_FILE_SIZE_MB || 5)
   const allowed = parseAllowedTypes(process.env.ALLOWED_MIME)
 
   const bucket = process.env.S3_BUCKET || process.env.AWS_S3_BUCKET
