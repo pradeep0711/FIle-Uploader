@@ -7,7 +7,7 @@ const PORT = process.env.PORT || 3000
 function enhance(res) {
   res.status = (code) => { res.statusCode = code; return res }
   res.json = (obj) => { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(obj)) }
-  return res
+  return res 
 }
 
 const server = http.createServer((req, resRaw) => {
