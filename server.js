@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import http from 'http'
 import handler from './api/upload.js'
 import presign from './api/presign.js'
@@ -7,7 +8,7 @@ const PORT = process.env.PORT || 3000
 function enhance(res) {
   res.status = (code) => { res.statusCode = code; return res }
   res.json = (obj) => { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(obj)) }
-  return res 
+  return res
 }
 
 const server = http.createServer((req, resRaw) => {
@@ -26,7 +27,7 @@ const server = http.createServer((req, resRaw) => {
     return presign(req, res)
   }
   if (req.url?.startsWith('/api/')) {
-    res.status(404).end('Not Found')
+    return res.status(404).end('Not Found')
   }
   res.status(200)
   res.setHeader('Content-Type', 'text/plain')
